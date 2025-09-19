@@ -49,7 +49,7 @@ if INDEX_NAME not in existing_indexes:
     )
     # Wait for index to be ready
     print("Waiting for index to be ready...")
-    time.sleep(30)  # Adjust as needed based on index creation time
+    time.sleep(30)
 
 # Get Index object
 index = pc.Index(name=INDEX_NAME)
@@ -66,14 +66,59 @@ print(f"Found {total_movies} movies to index")
 batch = []
 count = 0
 
-for m in movies.find({}, {"_id":1, "title":1, "fullplot":1, "year":1}):
-    text = f"{m.get('title','')} {m.get('fullplot','')}"
-    embedding = model.encode(text, normalize_embeddings=True).tolist()
+for m in movies.find({}, {
+    "_id": 1, 
+    "title": 1, 
+    "fullplot": 1, 
+    "year": 1,
+    "genres": 1,
+    "directors": 1,
+    "cast": 1,
+    "plot": 1,
+    "rated": 1,
+    "runtime": 1
+}):
+    # Create enhanced search text from multiple fields
+    title = m.get('title', '')
+    fullplot = m.get('fullplot', '') or m.get('plot', '')
+    genres = ', '.join(m.get('genres', []))
+    directors = ', '.join(m.get('directors', []))
+    cast = ', '.join(m.get('cast', []))
+    year = m.get('year', '')
+    rated = m.get('rated', '')
+    runtime = m.get('runtime', '')
+    
+    # Create comprehensive search text
+    search_text = f"""
+    Title: {title}
+    Year: {year}
+    Rating: {rated}
+    Runtime: {runtime} minutes
+    Genres: {genres}
+    Directors: {directors}
+    Cast: {cast}
+    Plot: {fullplot}
+    """
+    
+    # Clean up the text
+    search_text = ' '.join(search_text.split()).strip()
+    
+    embedding = model.encode(search_text, normalize_embeddings=True).tolist()
 
     batch.append({
         "id": str(m["_id"]),
         "values": embedding,
-        "metadata": {"title": m.get("title"), "year": m.get("year"), "text": text}
+        "metadata": {
+            "title": title,
+            "year": year,
+            "genres": genres,
+            "directors": directors,
+            "cast": cast,
+            "rated": rated,
+            "runtime": runtime,
+            "plot": fullplot[:200] + "..." if len(fullplot) > 200 else fullplot,
+            "search_text": search_text[:500] + "..." if len(search_text) > 500 else search_text
+        }
     })
 
     if len(batch) >= BATCH_SIZE:

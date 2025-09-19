@@ -1,5 +1,5 @@
 """
-Movie search from Pinecone vector store with all config in .env
+Enhanced movie search from Pinecone vector store with multi-field search
 """
 
 from sentence_transformers import SentenceTransformer
@@ -43,11 +43,6 @@ try:
     print(f"📐 Index dimension: {stats.dimension}")
     print(f"🔢 Total vectors: {stats.total_vector_count}")
     
-    if stats.namespaces:
-        print(f"📂 Namespaces: {list(stats.namespaces.keys())}")
-    else:
-        print("📂 No namespaces found")
-    
 except Exception as e:
     print(f"❌ Error connecting to Pinecone index: {e}")
     print("📋 Available indexes:")
@@ -58,6 +53,14 @@ except Exception as e:
     else:
         print("No indexes found")
     exit()
+
+# ----- Search examples -----
+print("\n💡 Search examples:")
+print("- 'space adventure by Alfonso Cuarón'")
+print("- 'sci-fi movies with Sandra Bullock'")
+print("- 'thriller films from 2013'")
+print("- 'Oscar winning space movies'")
+print("- 'George Clooney astronaut film'")
 
 # ----- Enter query -----
 user_query = input("\n🎬 Enter a description of the movie you're looking for:\n> ")
@@ -86,17 +89,37 @@ try:
         for i, match in enumerate(results.matches, 1):
             title = match.metadata.get("title", "Unknown Title")
             year = match.metadata.get("year", "N/A")
-            text = match.metadata.get("text", "")
+            genres = match.metadata.get("genres", "")
+            directors = match.metadata.get("directors", "")
+            cast = match.metadata.get("cast", "")
+            plot = match.metadata.get("plot", "")
             
             print(f"{i}. 🎥 {title} ({year})")
             print(f"   ⭐ Similarity score: {match.score:.3f}")
-            if text:
-                # Clean up text and show preview
-                preview = text.replace('\n', ' ').strip()
-                print(f"   📝 Description: {preview[:100]}...")
+            
+            if directors:
+                print(f"   👨‍💼 Directors: {directors}")
+            if genres:
+                print(f"   🎭 Genres: {genres}")
+            if cast:
+                cast_preview = ', '.join(cast.split(', ')[:3])
+                if len(cast.split(', ')) > 3:
+                    cast_preview += "..."
+                print(f"   🌟 Cast: {cast_preview}")
+            if plot:
+                print(f"   📝 Plot: {plot}")
+            
             print("-" * 80)
     else:
         print("\n❌ No matches found. Try a different search term.")
         
 except Exception as e:
     print(f"❌ Error querying Pinecone: {e}")
+
+# Show search tips
+print("\n💡 Search Tips:")
+print("- Include director names: 'movies by Alfonso Cuarón'")
+print("- Mention actors: 'films with Sandra Bullock'")
+print("- Specify genres: 'sci-fi thriller'")
+print("- Include years: '2013 space movies'")
+print("- Combine multiple criteria: 'space adventure by Cuarón from 2013'")
