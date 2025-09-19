@@ -130,7 +130,7 @@ while True:
         print("🔄 Continuing with next search...")
         continue
 
-    # Show search tips after results
+    # Show search tips
     print("\n💡 Search Tips for next search:")
     print("- Include director names: 'movies by Alfonso Cuarón'")
     print("- Mention actors: 'films with Sandra Bullock'")
