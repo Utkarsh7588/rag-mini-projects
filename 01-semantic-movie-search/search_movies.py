@@ -54,72 +54,95 @@ except Exception as e:
         print("No indexes found")
     exit()
 
-# ----- Search examples -----
-print("\n💡 Search examples:")
-print("- 'space adventure by Alfonso Cuarón'")
-print("- 'sci-fi movies with Sandra Bullock'")
-print("- 'thriller films from 2013'")
-print("- 'Oscar winning space movies'")
-print("- 'George Clooney astronaut film'")
+# ----- Search loop -----
+search_count = 0
 
-# ----- Enter query -----
-user_query = input("\n🎬 Enter a description of the movie you're looking for:\n> ")
-
-if not user_query.strip():
-    print("❌ Please enter a valid search query")
-    exit()
-
-# Convert to vector
-print("🔍 Generating embedding and searching...")
-query_embedding = model.encode(user_query, normalize_embeddings=True).tolist()
-
-# Search in Pinecone
-try:
-    results = index.query(
-        vector=query_embedding,
-        top_k=TOP_K,
-        include_values=False,
-        include_metadata=True
-    )
+while True:
+    search_count += 1
+    print(f"\n{'='*60}")
+    print(f"SEARCH #{search_count}")
+    print(f"{'='*60}")
     
-    # ----- Display matches -----
-    if results.matches:
-        print(f"\n🎉 Found {len(results.matches)} matches for: '{user_query}'\n")
-        
-        for i, match in enumerate(results.matches, 1):
-            title = match.metadata.get("title", "Unknown Title")
-            year = match.metadata.get("year", "N/A")
-            genres = match.metadata.get("genres", "")
-            directors = match.metadata.get("directors", "")
-            cast = match.metadata.get("cast", "")
-            plot = match.metadata.get("plot", "")
-            
-            print(f"{i}. 🎥 {title} ({year})")
-            print(f"   ⭐ Similarity score: {match.score:.3f}")
-            
-            if directors:
-                print(f"   👨‍💼 Directors: {directors}")
-            if genres:
-                print(f"   🎭 Genres: {genres}")
-            if cast:
-                cast_preview = ', '.join(cast.split(', ')[:3])
-                if len(cast.split(', ')) > 3:
-                    cast_preview += "..."
-                print(f"   🌟 Cast: {cast_preview}")
-            if plot:
-                print(f"   📝 Plot: {plot}")
-            
-            print("-" * 80)
-    else:
-        print("\n❌ No matches found. Try a different search term.")
-        
-except Exception as e:
-    print(f"❌ Error querying Pinecone: {e}")
+    # ----- Search examples -----
+    print("\n💡 Search examples:")
+    print("- 'space adventure by Alfonso Cuarón'")
+    print("- 'sci-fi movies with Sandra Bullock'")
+    print("- 'thriller films from 2013'")
+    print("- 'Oscar winning space movies'")
+    print("- 'George Clooney astronaut film'")
+    print("- 'quit' or 'exit' to end the program")
 
-# Show search tips
-print("\n💡 Search Tips:")
-print("- Include director names: 'movies by Alfonso Cuarón'")
-print("- Mention actors: 'films with Sandra Bullock'")
-print("- Specify genres: 'sci-fi thriller'")
-print("- Include years: '2013 space movies'")
-print("- Combine multiple criteria: 'space adventure by Cuarón from 2013'")
+    # ----- Enter query -----
+    user_query = input("\n🎬 Enter a description of the movie you're looking for:\n> ")
+
+    # Check for exit commands
+    if user_query.lower() in ['quit', 'exit', 'q', 'bye']:
+        print("\n👋 Thank you for using Movie Search! Goodbye!")
+        break
+
+    if not user_query.strip():
+        print("❌ Please enter a valid search query")
+        continue
+
+    # Convert to vector
+    print("🔍 Generating embedding and searching...")
+    query_embedding = model.encode(user_query, normalize_embeddings=True).tolist()
+
+    # Search in Pinecone
+    try:
+        results = index.query(
+            vector=query_embedding,
+            top_k=TOP_K,
+            include_values=False,
+            include_metadata=True
+        )
+        
+        # ----- Display matches -----
+        if results.matches:
+            print(f"\n🎉 Found {len(results.matches)} matches for: '{user_query}'\n")
+            
+            for i, match in enumerate(results.matches, 1):
+                title = match.metadata.get("title", "Unknown Title")
+                year = match.metadata.get("year", "N/A")
+                genres = match.metadata.get("genres", "")
+                directors = match.metadata.get("directors", "")
+                cast = match.metadata.get("cast", "")
+                plot = match.metadata.get("plot", "")
+                
+                print(f"{i}. 🎥 {title} ({year})")
+                print(f"   ⭐ Similarity score: {match.score:.3f}")
+                
+                if directors:
+                    print(f"   👨‍💼 Directors: {directors}")
+                if genres:
+                    print(f"   🎭 Genres: {genres}")
+                if cast:
+                    cast_preview = ', '.join(cast.split(', ')[:3])
+                    if len(cast.split(', ')) > 3:
+                        cast_preview += "..."
+                    print(f"   🌟 Cast: {cast_preview}")
+                if plot:
+                    print(f"   📝 Plot: {plot}")
+                
+                print("-" * 60)
+        else:
+            print(f"\n❌ No matches found for: '{user_query}'")
+            print("💡 Try a different search term or be more specific.")
+            
+    except Exception as e:
+        print(f"❌ Error querying Pinecone: {e}")
+        print("🔄 Continuing with next search...")
+        continue
+
+    # Show search tips after results
+    print("\n💡 Search Tips for next search:")
+    print("- Include director names: 'movies by Alfonso Cuarón'")
+    print("- Mention actors: 'films with Sandra Bullock'")
+    print("- Specify genres: 'sci-fi thriller'")
+    print("- Include years: '2013 space movies'")
+    print("- Combine multiple criteria: 'space adventure by Cuarón from 2013'")
+    print("- Type 'quit', 'exit', or 'q' to end the program")
+
+# Final message after loop ends
+print(f"\n📊 You performed {search_count-1} search(es) today!")
+print("🌟 Hope you found what you were looking for!")
