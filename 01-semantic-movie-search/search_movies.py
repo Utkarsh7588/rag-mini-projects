@@ -1,7 +1,3 @@
-"""
-Enhanced movie search from Pinecone vector store with multi-field search
-"""
-
 from sentence_transformers import SentenceTransformer
 from pinecone import Pinecone
 import os
